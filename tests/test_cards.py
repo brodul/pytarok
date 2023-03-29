@@ -1,0 +1,26 @@
+from pytarok.cards import generate_roman_number
+
+
+class TestGenerateRomanNumber:
+    def test_two(self):
+        got = generate_roman_number(2)
+        want = "II"
+
+        assert got == want
+
+    def test_four(self):
+        got = generate_roman_number(4)
+        want = "IV"
+
+        assert got == want
+
+    def test_twenty(self):
+        got = generate_roman_number(20)
+        want = "XX"
+
+        assert got == want
+
+    def test_all(self):
+        got = " ".join(map(generate_roman_number, range(2, 21)))
+        want = "II III IV V VI VII VIII IX X XI XII XIII XIV XV XVI XVII XVIII XIX XX"
+        assert got == want
