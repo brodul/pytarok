@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Union
 import random
 from functools import partial
 
@@ -11,15 +11,25 @@ BLACK_SUITS = '♣ ♠'.split()
 
 @dataclass
 class SuitCard:
+    
     rank: str
     suit: str
     color: str
+    # TODO: point_value
+
+@dataclass
+class TarokCard:
+    rank: str
+    suit: str
+    color: str
+    # TODO: point_value
+
 
 def make_deck():
     return [SuitCard(r, s, "red") for s in RED_SUITS for r in RED_RANKS] + [SuitCard(r, s, "black") for s in BLACK_SUITS for r in BLACK_RANKS]
 
 def make_shuffled_deck():
-    # todo not random
+    # TODO: not random
     random.shuffle(deck:=make_deck())
     return deck
 
@@ -28,3 +38,5 @@ def make_shuffled_deck():
 class Deck:  
     cards: List[SuitCard] = field(default_factory=make_shuffled_deck)
 
+
+Card = Union[SuitCard, TarokCard, SpecialCard]
