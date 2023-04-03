@@ -13,6 +13,7 @@ let
   ] ++ builtins.getAttr buildType {
     dev = [
       niv
+      pre-commit
     ];
     prod = [];
   };

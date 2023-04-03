@@ -1,7 +1,7 @@
 import random
 from collections import namedtuple
 from dataclasses import dataclass, field
-from typing import List, Tuple, Union, NewType
+from typing import Type, List, Tuple, Union, NewType
 
 
 def generate_roman_number(rank: int) -> str:
@@ -17,8 +17,8 @@ def generate_roman_number(rank: int) -> str:
 Suit = namedtuple("Suit", "suit_name suit_symbol")
 
 
-BlackSuits = NewType("BlackSuit", Tuple[Suit])
-RedSuits = NewType("RedSuit", Tuple[Suit])
+BlackSuit = NewType("BlackSuit", Tuple[Suit, Suit])
+RedSuit = NewType("RedSuit", Tuple[Suit, Suit])
 
 
 @dataclass
@@ -26,10 +26,10 @@ class SuitCard:
     rank_short_name: str
     rank_name: str
     rank_weight: int
+    point_value: int
     suit_name: str
     suit_symbol: str
     color: str
-    point_value: int
 
 
 @dataclass
@@ -50,9 +50,8 @@ class SpecialCard:
 
 Card = Union[SuitCard, TarokCard, SpecialCard]
 
-RankCardTemplate = RCT = namedtuple(
-    "RankCardTemplate", ("rank_short_name", "rank_name", "rank_weight", "point_value")
-)
+# RankCardTemplate
+RCT = namedtuple("RCT", ("rank_short_name", "rank_name", "rank_weight", "point_value"))
 FAMILY_RANKS = (
     RCT("J", "Jack", 5, 2),
     RCT("C", "Knight", 6, 3),
@@ -72,26 +71,25 @@ BLACK_RANKS = (
     RCT("10", "Ten", 4, 1),
 ) + FAMILY_RANKS
 
-RED_SUITS = RedSuits(
+RED_SUITS = RedSuit(
     (
         Suit("Diamond", "♢"),
         Suit("Heart", "♡"),
     )
 )
-BLACK_SUITS = BlackSuits(
+BLACK_SUITS = BlackSuit(
     (
         Suit("Club", "♣"),
         Suit("Spade", "♠"),
     )
 )
 
-Card = Union[SuitCard, TarokCard, SpecialCard]
 Deck = List[Card]
 
 
 def make_suit_deck() -> List[SuitCard]:
-    return [SuitCard(*s, "red", *r) for s in RED_SUITS for r in RED_RANKS] + [
-        SuitCard(*s, "black", *r) for s in BLACK_SUITS for r in BLACK_RANKS
+    return [SuitCard(*s, *r, "red") for s in RED_SUITS for r in RED_RANKS] + [
+        SuitCard(*s, *r, "black") for s in BLACK_SUITS for r in BLACK_RANKS
     ]
 
 

@@ -6,13 +6,12 @@ authors = ["brodul <<brodul@brodul.org>>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+six = "^1.16.0"
 
 [tool.poetry.dev-dependencies]
-poetry = "^1.1.7"
+poetry = "^1.4.2"
 pytest = "^7.2.2"
 pytest-watch = "^4.2.0"
-
-[tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 
 [build-system]
