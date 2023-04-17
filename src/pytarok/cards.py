@@ -88,8 +88,8 @@ Deck = List[Card]
 
 
 def make_suit_deck() -> List[SuitCard]:
-    return [SuitCard(*s, *r, "red") for s in RED_SUITS for r in RED_RANKS] + [
-        SuitCard(*s, *r, "black") for s in BLACK_SUITS for r in BLACK_RANKS
+    return [SuitCard(*r, *s, "red") for s in RED_SUITS for r in RED_RANKS] + [
+        SuitCard(*r, *s, "black") for s in BLACK_SUITS for r in BLACK_RANKS
     ]
 
 
