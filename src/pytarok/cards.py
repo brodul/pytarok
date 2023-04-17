@@ -114,8 +114,11 @@ def shuffle(deck: Deck, seed=None) -> Deck:
     return deck_copy
 
 
-def make_deck():
-    deck = make_suit_deck() + make_tarok_deck() + make_special_deck()
+def make_deck() -> List[Card]:
+    deck: List[Card] = []
+    deck.extend(make_tarok_deck())
+    deck.extend(make_suit_deck())
+    deck.extend(make_special_deck())
     return deck
 
 
