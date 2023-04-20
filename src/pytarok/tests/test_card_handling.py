@@ -1,4 +1,4 @@
-from pytarok.card_count import count_original
+from pytarok.card_handling import count_original
 
 
 class TestCountOriginal:
