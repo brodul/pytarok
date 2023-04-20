@@ -7,6 +7,7 @@ let
 
   dependencies = with pkgs; [
     stdenv
+    git
     python310
     python311
     python312
@@ -18,7 +19,6 @@ let
   ] ++ builtins.getAttr buildType {
     dev = [
       niv
-      pre-commit
     ];
     prod = [];
   };
