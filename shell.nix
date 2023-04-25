@@ -16,6 +16,7 @@ let
     python310.pkgs.tox
 
     libffi  # pytest
+    graphviz
   ] ++ builtins.getAttr buildType {
     dev = [
       niv
