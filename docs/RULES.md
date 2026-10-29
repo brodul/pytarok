@@ -6,10 +6,15 @@ details. This document therefore defines **one baseline ruleset** (§1–§12) a
 lists every known divergence as a named **variant** (§13). The engine should
 implement the baseline and expose the variants as configuration.
 
-Baseline = the 4-player social game ("klicanje kralja") as described by pagat.com,
-cross-checked against Slovenian club and tournament rules. Where sources
-disagree, the choice made for the baseline is stated inline as **[baseline]** and
-the alternatives are listed in §13.
+**Both player counts are first-class:**
+- **3 players**: the tournament form (Tarok zveza Slovenije). The declarer always plays alone.
+- **4 players**: the social form, "klicanje kralja". The declarer may call a king to pick a secret partner.
+
+Most of the game is shared: cards, counting, talon, trick rules, bonuses, klop, radelci and scoring. Rules that apply to only one form are tagged **[3p]** or **[4p]**; untagged rules apply to both. §12 summarises every difference between the two.
+
+Where sources disagree, the choice made for the baseline is stated inline as **[baseline]**, with alternatives in §13. Baseline choices follow pagat.com, cross-checked against Slovenian club and tournament rules.
+
+*Implementation order:* build the core around N players, ship 3-player first, then add the [4p] pieces: the 4×12 deal, king call and hidden partner, solo contracts, king ultimo and partner scoring.
 
 ## Sources
 
@@ -106,19 +111,43 @@ Batching is per pile. A side's pile is all its tricks **plus** any talon cards a
 
 ## 4. Players, seats, dealing
 
-- **[baseline] 4 players.** 3-player rules are in §12. With 5 players the dealer sits out each hand and does not score, but still receives radelci [P].
+- **3 or 4 players.** A 5-player table plays the 4-player game with the dealer sitting out each hand; the dealer doesn't score but still receives radelci [P]. A 4-player table can also play "3+1" [TN]: one player rests each hand.
 - Play rotates in one fixed direction: anticlockwise in [P] and [TN], clockwise in [TZS] and [B]. For the engine only "next seat" matters.
 - **Forehand** is the player next to the dealer in the direction of play, i.e. the first player dealt to.
 - **Deal:** shuffle, have the pack cut, then deal **6 cards to the talon first, as one packet from the top of the pack**, then 12 cards each in packets of 6 (in 3-player: 16 each in packets of 8).
   The talon packet keeps its order. That order matters later, because the talon is split into groups in that order.
-- **Knocking** instead of cutting [P]: the player who would cut chooses which packet of 12 they take. This is a social nicety and optional for the engine.
+
+  | | talon | hands |
+  |---|---|---|
+  | [3p] | 6 | 3 × 16, in packets of 8 |
+  | [4p] | 6 | 4 × 12, in packets of 6 |
+
+- **Knocking** instead of cutting [P] [4p]: the player who would cut chooses which packet of 12 they take. This is a social nicety and optional for the engine. [TZS] forbids knocking.
 - **No-tarok hand:** a player dealt no taroks must show their hand. The hand is annulled and redealt by the same dealer.
   **[baseline]** The redeal is a compulsory klop [P]. In [TZS] and [TN] it is a plain redeal.
 - **Misdeal:** the dealer is penalised −20, then −40, −80, … for repeat offences, and deals again [P][B]. [TZS] first gives a warning.
 
 ---
 
-## 5. Contracts (4-player)
+## 5. Contracts
+
+### 5.1 [3p] contracts
+
+The declarer always plays alone against the other two.
+
+| # | contract | slo. | value | talon | goal |
+|---|---|---|---|---|---|
+| 0 | klop | klop | special (§10) | turned up in tricks 1–6 | take as few points as possible |
+| 1 | three | tri / trojka | 10 + diff | takes 3 | ≥ 36 points |
+| 2 | two | dva / dvojka | 20 + diff | takes 2 | ≥ 36 |
+| 3 | one | ena / enka | 30 + diff | takes 1 | ≥ 36 |
+| 4 | beggar | berač | 70 ([TZS]: 125) | unused | take no trick |
+| 5 | solo without | solo brez (talona) | 80 ([TN]: + diff) | goes unseen to the opponents | ≥ 36 |
+
+- **Optional high contracts** ([P] variant; listed in [TN] and [B]): open beggar 90, colour valat 125, valat 500. Each is played as in 4-player.
+- **Normal contracts** are 1–3. Only these score difference and bonuses.
+
+### 5.2 [4p] contracts
 
 Contracts in ascending order. **[baseline]** values are from [P].
 
@@ -137,7 +166,8 @@ Contracts in ascending order. **[baseline]** values are from [P].
 | 10 | colour valat without | barvni valat brez | 125 | alone | none | all tricks, taroks are not trumps |
 | 11 | valat without | valat brez | 500 | alone | none | all tricks |
 
-- **"Normal" contracts** are 1–6. Only these score difference and bonuses.
+- **[4p] "Normal" contracts** are 1–6. Only these score difference and bonuses.
+- Throughout this doc, "normal contracts" means 1–3 in [3p] and 1–6 in [4p].
 - **High contracts** are 7 and up. They score their flat value only: no difference, no bonuses. The single exception is the mond penalty, which still applies in solo without (§8.5).
 - Colour valat with a talon cannot be bid. It arises only by **upgrading** a solo three/two/one after the exchange (§7.4).
 
@@ -152,7 +182,10 @@ Contracts in ascending order. **[baseline]** values are from [P].
    Example (A forehand, then B, C, D): B "two", C passes, D must bid at least "one". If D bids "one", A may also say "one" and takes over.
 4. **A pass is final.** A player who has passed cannot re-enter.
 5. The auction ends when every other player has passed. The last bidder becomes the declarer.
-6. If **everyone else passes**, forehand chooses any contract, **including klop or three**. Klop and three are available only to forehand and only in this case.
+6. If **everyone else passes**:
+   - [4p]: forehand chooses any contract, **including klop or three**. Klop and three are available only to forehand and only in this case.
+   - [3p] [P]: three is an ordinary bid that any player may make, and klop can't be bid. **If all three players pass, klop is played.**
+   - [3p] [TZS]: forehand's compulsory "three" stands. If nobody outbids it, forehand chooses three, anything higher, or klop.
 7. **[baseline, P]** The declarer then names the final contract: the bid, or anything higher.
    Variant [B] and many tables: you must play exactly what you bid, except for the colour-valat upgrade.
 8. **Compulsory klop:** contracts three through beggar are unavailable, so the lowest bid is solo without. If nobody bids, forehand chooses between solo without or higher and klop; usually klop is played.
@@ -162,7 +195,9 @@ Contracts in ascending order. **[baseline]** values are from [P].
 
 ## 7. Before play: king call, talon, announcements
 
-### 7.1 Calling a king (contracts three, two and one)
+### 7.1 [4p] Calling a king (contracts three, two and one)
+
+[3p] has no king call: the declarer is always alone.
 
 - The declarer names a suit **before the talon is turned over**. Whoever holds that king is the secret partner and does not reveal it. Partnerships often become clear only during play.
 - **Calling your own king is legal.** You then play 1-vs-3 while the others don't know they are a team. It's usually a mistake, since a solo bid scores 30 more.
@@ -174,13 +209,13 @@ Contracts in ascending order. **[baseline]** values are from [P].
 
 ### 7.2 Talon exchange (contracts 1–6)
 
-1. Turn the talon face up, split **in dealt order** into groups: 2×3 (three/solo three), 3×2 (two/solo two) or 6×1 (one/solo one).
+1. Turn the talon face up, split **in dealt order** into groups: 2×3 (three/solo three), 3×2 (two/solo two) or 6×1 (one/solo one). The same applies in [3p].
 2. The declarer takes **one group** into hand.
 3. The declarer discards (*založi*) the **same number** of cards face down onto their own trick pile. The discards count for the declarer's side.
 4. **Kings and trula cards may never be discarded.**
 5. **Other taroks may be discarded only face up**, so everyone knows how many trumps remain in play.
    [B] and [TN] go further: taroks and kings may not be discarded at all unless the hand has nothing else, in which case the hand must be shown.
-6. The untaken talon groups go face down to the **opponents**. In king-call games, keep them **separate** until the partnerships are known.
+6. The untaken talon groups go face down to the **opponents**. In [4p] king-call games, keep them **separate** until the partnerships are known.
 7. In solo without and the high contracts the talon is not looked at. In solo without it goes to the opponents.
 
 ### 7.3 Mond left in the talon
@@ -191,7 +226,8 @@ If the declarer leaves the mond in an untaken talon group, the declarer gets the
 
 ### 7.4 Colour-valat upgrade
 
-After the exchange in **solo three, solo two or solo one**, the declarer may raise the contract to **colour valat** (125, nothing else scored). [TN] lets three/two/one upgrade too, with a partner, at lower values.
+- [4p]: after the exchange in **solo three, solo two or solo one**, the declarer may raise the contract to **colour valat** (125, nothing else scored). [TN] lets three/two/one upgrade too, with a partner, at lower values.
+- [3p]: only if colour valat is enabled. Then three, two or one may be raised after the exchange [P].
 
 ### 7.5 Announcements and kontra
 
@@ -203,7 +239,7 @@ After the exchange, starting with the declarer and going round until everyone ha
 |---|---|---|---|
 | trula | 10 | 20 | your side takes škis, mond and pagat in its tricks |
 | kings (kralji) | 10 | 20 | your side takes all 4 kings |
-| king ultimo (kralj ultimo) | 10 | 20 | the **called king** is played in the **last trick** and that trick is won by the declarer's side. *Only the partner (holder of the called king) may announce it* [P] |
+| king ultimo (kralj ultimo) **[4p]** | 10 | 20 | the **called king** is played in the **last trick** and that trick is won by the declarer's side. *Only the partner (holder of the called king) may announce it* [P] |
 | pagat ultimo | 25 | 50 | the **pagat wins the last trick** itself. Only the pagat holder may announce it |
 | valat | 250 | 500 | your side wins every trick. **Replaces all other scores for the hand**, game included |
 
@@ -212,7 +248,7 @@ After the exchange, starting with the declarer and going round until everyone ha
 - You may announce trula or kings without holding the cards, planning to capture them.
 - **Kontra:** an opponent of whoever made a bid or announcement doubles it (×2). The announcing side may rekontra (×4), then sub (×8), then mort (×16).
   Each kontra applies to **one named item** ("kontra the game", "kontra the trula"). The game and each bonus are doubled independently. "The game" covers the contract value plus the difference.
-- **You may kontra only if you are certain the announcer is on the other side.** In king-call games this matters, because partnerships may still be hidden.
+- **You may kontra only if you are certain the announcer is on the other side.** This matters in [4p] king-call games, where partnerships may still be hidden. In [3p] the sides are always known.
 - [TZS]: silent bonuses are never subject to kontra.
 - The declarer ends their turn by saying **"ležim"**; the others answer "dalje" (pass), or announce/kontra.
 
@@ -310,7 +346,8 @@ mond     = −20 to whoever lost the mond (separate, never multiplied)
 
 - The **game and each bonus are independent**. You can win the game and still lose points overall on bonuses.
 - **Valat** (silent 250 / announced 500) replaces the game and all bonuses.
-- **[baseline, P] Partner solidarity:** the declarer and partner each write the same amount; the defenders write nothing.
+- [3p]: only the declarer writes the game score. Defenders write their own bonus results, and [TN] gives the non-announcing defender half.
+- **[4p] [baseline, P] Partner solidarity:** the declarer and partner each write the same amount; the defenders write nothing.
   Variants: [TN] says the partner writes half. In "money" scoring, each player pays or receives individually (§13).
 
 **High contracts:** the declarer's side writes ± the flat value (× kontra, × radelc). There is no difference and no bonuses.
@@ -365,31 +402,31 @@ Tournaments instead use fixed counts of hands: 12, 21, 24 …
 
 ---
 
-## 12. Three-player game (the tournament standard)
+## 12. 3-player vs 4-player at a glance
 
-The Tarok zveza Slovenije plays 3-player. Differences from the 4-player game:
+Everything not listed here is identical.
 
-- Deal 6 to the talon, then 16 each in two packets of 8.
-- **No king call.** The declarer always plays alone against the other two; only klop is everyone for themselves.
-- Contracts:
+| aspect | [3p] | [4p] |
+|---|---|---|
+| deal | talon 6 + 3×16 (packets of 8) | talon 6 + 4×12 (packets of 6) |
+| sides | declarer alone vs 2 | declarer + called partner vs 2, or alone vs 3 |
+| hidden partner | never | yes, until the called king shows |
+| contracts | klop, three, two, one, beggar, solo without (+ optional open beggar, colour valat, valat) | klop, three, two, one, solo three/two/one, beggar, solo without, open beggar, colour valat without, valat without |
+| klop | played when all pass ([TZS]: forehand's choice) | forehand's choice when all others pass |
+| three | any player may bid it ([TZS]: forehand's compulsory opening) | forehand only, when all others pass |
+| bonuses | trula, kings, pagat ultimo, valat | + king ultimo |
+| kontra legality | sides always known | must be certain of the announcer's side |
+| colour valat | optional, upgrade from three/two/one | upgrade from solo three/two/one, or bid "without" |
+| klop "talon player" | in "3+1" the resting player also plays klop [TN] | — |
+| tournament use | standard [TZS] | club [B] |
 
-  | contract | value |
-  |---|---|
-  | three | 10 + diff |
-  | two | 20 + diff |
-  | one | 30 + diff |
-  | beggar | 70 ([TZS]: 125) |
-  | solo without | 80 ([TN]: + diff) |
+**[3p]-only variants:**
+- **Vogel frei** [P]: a player dealt the pagat as their only tarok may announce it. The pagat may then be played to any trick regardless of suit, and wins it.
+- **Weak-hand annulment**: a hand with ≤ 2 taroks, all below X, may be annulled.
 
-  Optional extras: open beggar 90, colour valat 125, valat 500.
-- Klop cannot be bid. It is played when all three pass.
-- Bonuses: trula, kings, pagat ultimo, valat (no king ultimo).
-- [TZS]: the difference is exact, the mond penalty is −21, and kontra goes up to mort.
-- [TN] "3+1": four players sit at the table, one rests per hand and holds the talon, but also plays in klop.
-- **Vogel frei** (variant [P]): a player dealt the pagat as their only tarok may announce it. The pagat may then be played to any trick, regardless of suit, and wins it.
-- Annulment variant: a hand with ≤ 2 taroks, all below X, may be annulled.
+[TZS] tournament specifics: the difference is exact (no rounding), the mond penalty is −21, beggar is worth 125, kontra goes up to mort, and a game lasts 21 or 24 hands.
 
-> **Note for pytarok:** `card_handling.split_deck` currently deals 6 + 3×16, i.e. the **3-player** game. The baseline in this document is 4-player (6 + 4×12). The deal needs to be parameterised by player count.
+> **Note for pytarok:** `card_handling.split_deck` hard-codes 6 + 3×16, i.e. the 3-player deal. It must be parameterised by player count.
 
 ---
 
@@ -398,7 +435,7 @@ The Tarok zveza Slovenije plays 3-player. Differences from the 4-player game:
 Each variant is listed as `flag` = baseline, then the alternatives.
 
 **Table**
-- `players` = 4 · 3 · 5 (dealer sits out)
+- `players` = 3 · 4 (both first-class) · 5 (4p with dealer sitting out) · "3+1" (4p table playing 3p)
 - `direction` = irrelevant to rules; seat order only
 
 **Deal**
@@ -463,7 +500,8 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 
 ## 14. Engine notes (non-rules, for implementers)
 
-- **Hidden information is part of the rules.** In king-call games, the partner's identity, the face-down discards and which talon groups belong to whom are all unknown to some players. The legality of a kontra depends on what the *kontra-ing* player knows (§7.5). Model per-player views explicitly.
+- **Keep the player count a parameter**, not a branch scattered through the code. [4p] differs from [3p] only in the deal, the contract list, the king call, king ultimo and partner scoring (§12). Put the side assignment behind one abstraction that is fixed in [3p] and resolved during play in [4p].
+- **Hidden information is part of the rules.** In [4p] king-call games, the partner's identity, the face-down discards and which talon groups belong to whom are all unknown to some players. The legality of a kontra depends on what the *kontra-ing* player knows (§7.5). Model per-player views explicitly.
 - **Keep the talon order.** The groups in §7.2 and the klop vitamins in §10 both depend on it.
 - **Pile bookkeeping:** rejected talon groups and discards are credited to sides, not to tricks, and the called-king-in-talon rule can move a group between sides mid-hand.
 - **Check every count with the sides-sum-to-70 invariant** (§3).
