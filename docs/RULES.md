@@ -12,7 +12,7 @@ implement the baseline and expose the variants as configuration.
 
 Most of the game is shared: cards, counting, talon, trick rules, bonuses, klop, radelci and scoring. Rules that apply to only one form are tagged **[3p]** or **[4p]**; untagged rules apply to both. §12 summarises every difference between the two.
 
-Where sources disagree, the choice made for the baseline is stated inline as **[baseline]**, with alternatives in §13. Baseline choices follow pagat.com, cross-checked against Slovenian club and tournament rules.
+Where sources disagree, the choice made for the baseline is stated inline as **[baseline]**, with alternatives in §13. Baseline choices follow pagat.com, cross-checked against Slovenian club and tournament rules. Points that no source settles are listed in §15 rather than guessed.
 
 *Implementation order:* build the core around N players, ship 3-player first, then add the [4p] pieces: the 4×12 deal, king call and hidden partner, solo contracts, king ultimo and partner scoring.
 
@@ -22,6 +22,19 @@ Where sources disagree, the choice made for the baseline is stated inline as **[
 - **[TZS]** Tarok zveza Slovenije, *Pravila tekmovalnega taroka* (official tournament rules, 3-player) — https://pvds-se.si/wp-content/uploads/2021/11/PRAVILA-TEKMOVALNEGA-TAROKA.pdf
 - **[TN]** M. Cigan, *Pravila taroka* v1.08, 2016 (Tarok.net; 2-, 3-, 4-player and "3+1" competitive) — https://www.tarok.net/pravila108.pdf
 - **[B]** Društvo »BERAČ«, *Pravila igre tarok*, 2023 (club tournament rules, 3- and 4-player) — https://berac.si/wp-content/uploads/2023/09/Pravila-taroka-precisceno-9.9.2023.pdf
+- **[MZT]** Mestna zveza tabornikov Ljubljana, *Taborniški tarok* booklet — https://www.mzt.org/wp-content/uploads/tarok_karte_navodila_print.pdf
+- **[ST]** slovenski-tarok.si, *Pravila za igranje taroka* — https://slovenski-tarok.si/pravila
+- **[ZIR]** *Žirovska pravila taroka* (regional; uses a different "poeni" scoring unit, so cited only for structural rules) — https://mahar.si/Tarok/ZIROVSKA_PRAVILA_TAROKA.pdf
+- **[SEL]** ŠD Selca, *Pravila igranja taroka po »Selško«* (1998–2008; poeni scoring, structural rules only) — http://www.sdselca.si/wp-content/uploads/2014/11/2014-tarok-pravila-po-sel%C5%A1ko.pdf
+- **[ZN]** znam.si, *Pravila igre Tarok (Tarok Semedela Open)* — https://znam.si/igre/pravila-igre-tarok-tarok-semedela-open/
+- **[PSI]** pagat.si, Slovenian adaptation of [P] — https://pagat.si/tarok/
+- **[WIKI]** sl.wikipedia.org, *Tarok* — https://sl.wikipedia.org/wiki/Tarok
+- **[OS]** DeepMind OpenSpiel, Slovenian tarok engine, `open_spiel/games/tarok/tarok.cc` (code, not a rulebook) — https://github.com/google-deepmind/open_spiel/tree/master/open_spiel/games/tarok
+- **[PAL]** Tarok Palčka / StockŠkis (mytja/tarok, commit 5a083f0, 2025): `backend/internal/ws/*.go`, `stockskis/lib/src/stockskis_base.dart` (code, not a rulebook) — https://github.com/mytja/tarok
+
+[OS] and [PAL] are cited for what implementers actually chose, and as warnings where their code breaks the written rules.
+
+> **Terminology trap ([TZS]):** in [TZS], *napovedi* are the bonuses, and ***posebne napovedi* are the kontras** (B1.19). [TN] and [B] use *posebne napovedi* for the bonuses. Read [TZS] B1.14 and B1.20–24 with that in mind.
 
 ---
 
@@ -180,6 +193,8 @@ Contracts in ascending order. **[baseline]** values are from [P].
    - Variant ([TZS][B] "obvezna trojka"): forehand holds an implicit compulsory bid of "three", and the others must outbid it.
 3. **Seniority rule.** A junior player must bid **strictly higher** than the current bid. A senior player may **hold**, i.e. bid **equal** to a junior player's bid and take it over.
    Example (A forehand, then B, C, D): B "two", C passes, D must bid at least "one". If D bids "one", A may also say "one" and takes over.
+   - **[baseline, P][OS][TN §3.2]** Any senior player may hold against any junior one.
+   - Variants: only forehand may hold ([MZT][ST][PAL]; [TN §2.3] and [B] give it to "the first bidder"); nobody may hold, "ni čakanja, ni prevzemanja za nazaj" [SEL]. [TZS] B1.9 mentions only raising ("zviša le igralec s prednostjo"), never holding (§15).
 4. **A pass is final.** A player who has passed cannot re-enter.
 5. The auction ends when every other player has passed. The last bidder becomes the declarer.
 6. If **everyone else passes**:
@@ -187,9 +202,18 @@ Contracts in ascending order. **[baseline]** values are from [P].
    - [3p] [P]: three is an ordinary bid that any player may make, and klop can't be bid. **If all three players pass, klop is played.**
    - [3p] [TZS]: forehand's compulsory "three" stands. If nobody outbids it, forehand chooses three, anything higher, or klop.
 7. **[baseline, P]** The declarer then names the final contract: the bid, or anything higher.
-   Variant [B] and many tables: you must play exactly what you bid, except for the colour-valat upgrade.
+   Variants: [B] rule 12 and [OS]: you must play exactly what you bid, except for the colour-valat upgrade. [TZS] B1.8–9: only forehand may choose higher, and only when their compulsory "three" was not outbid. [ST] [4p]: when the other three pass, forehand must choose something higher than the last bid.
 8. **Compulsory klop:** contracts three through beggar are unavailable, so the lowest bid is solo without. If nobody bids, forehand chooses between solo without or higher and klop; usually klop is played.
    Compulsory klop is triggered when a player's running score is **exactly 0**, and after a no-tarok redeal. [B] also makes the **first hand** of a session a compulsory klop. See §13 for more.
+   Kontra is never allowed in a compulsory klop [B].
+9. **Compulsory three, engine model** ([TZS] B1.6–8, [MZT], [B]). When `forehand_compulsory_three` is on:
+   - The auction starts at `high_bid = three, high_bidder = forehand`. Forehand's "three" is not a choice and cannot be withdrawn. It "doesn't mean forehand intends to play it" [MZT].
+   - Everyone else bids strictly higher or passes (B1.7: "potrdi … z besedo »dalje« ali pa najavi višjo igro"). Forehand may hold if `hold_rights` allows.
+   - If nobody exceeds "three" after the first round, forehand chooses three, any higher contract, or klop (B1.8). [TZS] B2.1: forehand then leads the klop.
+   - [B] [4p]: the bid list starts at "two", because "three" belongs to forehand.
+   - When compulsory three is **off**: [TN] §3.2 says a forehand who actively bids "three" loses the right to choose klop later.
+10. **Beggar vs valat ([TZS] 3p).** The [TZS] ladder is three < two < one < solo without (80) < beggar (125). B3.4: "Prednost pred igro »berač« ima izjemoma samo napoved »valat«". B1.17: valat is a biddable contract **only** to outbid an earlier beggar bid. Valat can't be opened, and nothing else outranks beggar. [MZT] does the same one step higher: valat is biddable only to beat open beggar.
+    - Equal high bids (beggar vs beggar, etc.) follow the ordinary hold rule (rule 3). No source has a special rule for them.
 
 ---
 
@@ -204,7 +228,26 @@ Contracts in ascending order. **[baseline]** values are from [P].
 - **If the called king is in the talon,** the declarer plays alone (*zarufal se je*):
   - If the declarer takes the talon group containing the king and later **wins a trick with that king**, the untaken rest of the talon is added to that trick, i.e. it goes to the declarer [P].
   - Otherwise the rest of the talon belongs to the opponents.
-  - Variants: [B] says in "two" the declarer *must* take the pair containing the king. [TN] says that if the king is taken but never wins a trick, the declarer instead gets a 5-point bonus.
+  - Variants: [B] says in "two" the declarer *must* take the pair containing the king. [ST] makes taking the king's group compulsory in every contract. [TN] says that if the king is taken but never wins a trick, the declarer instead gets a 5-point bonus.
+  - **[baseline, P][TN][OS]** Taking the king's group is **optional**.
+  - **The contract value doesn't change.** The declarer still scores three/two/one, not a solo value. No source says otherwise.
+  - **The sides become public** when the talon is turned up. Everyone sees the declarer is alone, so the kontra-legality rule (§7.5) stops restricting anyone.
+  - **"Wins a trick with the king" = "the declarer wins the trick the king was played to".** The declarer is alone and plays exactly one card per trick, so the king must be the winning card. [B]'s "pripeljal domov" is the same condition.
+  - **"Taken but never wins a trick"** in [TN] can only mean the king lost its trick, because kings can't be discarded and every card gets played. The exceptions are a claim (§11) or an aborted hand. Under [TN] the +5 is **card points**: they are added to the declarer's pile before the win check and the difference, so 31 card points win ("zadošča že, če preseže 30").
+
+  **Case table** ("remainder" = the groups the declarer didn't take) [P][TN][B][OS]:
+
+  | case | remainder goes to | decided | mond penalty if the mond is in the remainder |
+  |---|---|---|---|
+  | A. king's group **not taken** | opponents | at the exchange | −20 to the declarer |
+  | B. taken, king **wins** its trick | declarer, tossed onto that trick [P] | when the king's trick ends | **none** [P][OS] · −20 [B] |
+  | C. taken, king **loses** its trick | opponents ([TN]: plus +5 card points to the declarer) | when the king's trick ends | −20 |
+  | D. the mond is **in the king's group**, and it is taken | as B or C | — | none (the mond is in hand) |
+  | E. king and mond in the **same untaken group** | opponents | at the exchange | −20 [P] · none [B] rule 8 |
+
+  - The remainder is **not a trick**. In case B it adds card points to the declarer, and can complete their trula or kings bonus, but it doesn't count toward valat (§8.9).
+  - Until the king's trick ends, keep the remainder in a **pending** pile that belongs to no one. [ST] has the dealer hold it physically. The penalty for a mond in the talon is therefore final only once the remainder's owner is known.
+  - If the king's group is not taken, the called king lands in the opponents' pile and is never played. King ultimo is then impossible, and the engine should not offer it.
 - Variants for holding all four kings: call a trula card, or call "the fourth king" without naming its suit (§13).
 
 ### 7.2 Talon exchange (contracts 1–6)
@@ -223,6 +266,8 @@ Contracts in ascending order. **[baseline]** values are from [P].
 If the declarer leaves the mond in an untaken talon group, the declarer gets the **mond penalty** (§8.5), with these exceptions:
 - the called king is in another untaken group, and the declarer wins the rest of the talon with it [P] (variants in §13);
 - solo without.
+
+See the case table in §7.1. [B] rule 8 is stricter: "Puščen mond v talonu je vedno −20, tudi, če gre zarufan kralj okoli", i.e. a mond left in the talon always costs −20, but there is no −20 when the called king is left in the talon as well.
 
 ### 7.4 Colour-valat upgrade
 
@@ -249,8 +294,41 @@ After the exchange, starting with the declarer and going round until everyone ha
 - **Kontra:** an opponent of whoever made a bid or announcement doubles it (×2). The announcing side may rekontra (×4), then sub (×8), then mort (×16).
   Each kontra applies to **one named item** ("kontra the game", "kontra the trula"). The game and each bonus are doubled independently. "The game" covers the contract value plus the difference.
 - **You may kontra only if you are certain the announcer is on the other side.** This matters in [4p] king-call games, where partnerships may still be hidden. In [3p] the sides are always known.
-- [TZS]: silent bonuses are never subject to kontra.
+  With an own-king call the three opponents are partners without knowing it. Each of them may legally kontra only the declarer.
+- **Silent bonuses and kontra.** [TN] §3.6: "Tihe realizacije ne gredo pod kontro". [B] §2.11: "Tihe realizacije gredo pod kontro". Nobody names a silent bonus, so [B]'s rule means **the game's kontra multiplier also applies to silent bonuses**. [TZS] doesn't say. Kontras are said "za vsako igro in napoved posebej" (B1.23), and a silent bonus is no *napoved*, so it is unaffected. **[baseline, TN]** silent bonuses are not multiplied.
 - The declarer ends their turn by saying **"ležim"**; the others answer "dalje" (pass), or announce/kontra.
+
+**Announcement phase, exact procedure** [P][TZS B1.10][B §2.11][TN §3.6]:
+
+1. The phase is a loop that starts with the declarer, who exchanges, makes any announcements, and says "ležim".
+2. On their turn, a player may make **any number** of these actions and then passes:
+   - announce bonuses for their own side;
+   - raise the kontra level by one on any item where the next level belongs to their side.
+
+   **Kontra and the player's own announcements happen in the same turn.** The worked example in [B] and [TN]: `A: "ležim"`, `B: "dalje"`, `C: "kontra igri, napovem trulo in dalje"`, `A: "dalje"`.
+3. **A pass here is not final** (unlike the auction). The loop runs until every player has passed in a row since the last action [P]. A player who passed may still kontra a bonus announced later, or sub an item that was rekontra'd.
+4. **Who says which level.** Kontra (×2) and sub (×8) come from an opponent of whoever made the bid or announcement. Rekontra (×4) and mort (×16) come from that bid's or announcement's side. Each level raises the previous by exactly one step [P][PAL].
+   - **[baseline, P]** Either declarer-side player may rekontra the game. [B] §2.6 "Rekontro da lahko samo licitator igre", plus [MZT] and [ST]: only the declarer.
+   - [ZIR]: the same player may not say both kontra and sub. A per-player rule like this can't be modelled at team level.
+   - [4p] A hidden partner who says re reveals themselves, just as with a king-ultimo announcement (§15).
+5. **What can be kontra'd:**
+   - **the game**: contract value **plus the difference** ([B] §2.11 "igra (h kateri spada še razlika)", [TN], [P], [PAL]);
+   - every announced bonus, each separately [P][TZS][B][WIKI]. [PAL] does not allow kontra on trula and kings.
+   - the game of **every contract except klop**, high contracts included (beggar, solo without, open beggar, valats). No source forbids it. [PAL] multiplies them all, and [TZS] B1.20 defines a successful kontra as the target losing their game, whatever the contract.
+   - Each kontra must name its item: "Kontra mora biti točno določena" [B][TN]. [SEL] alone allows one kontra "na vse skupaj" (on everything).
+   - Never the mond penalty [P][B][TN]. [PAL] has an optional *announced* mondfang (42) that can be kontra'd.
+6. **[SEL]** restricts kontra on the contract "three" to players who had not yet bid, or whose bid was taken over. Anyone may kontra "two" and higher.
+
+**Who pays for a kontra.** The sources settle kontras in three ways (m = the multiplier, T = the item value including difference):
+
+| model | declarer wins (kontra failed) | declarer loses (kontra succeeded) | sources |
+|---|---|---|---|
+| **symmetric [baseline]** | declarer side +T·m | declarer side −T·m | [P][B][WIKI][MZT][PAL] |
+| caller pays | declarer +T; **the kontra-er** −T·m/2; the other defender 0 | declarer −T·m | [TN] (3p, 3+1 and 4p tables; the partner always writes ±T/2, undoubled) |
+| compensation | declarer +T·m; the defender who did **not** kontra gets a bonus equal to what the kontra cost them | declarer −T·m | [TZS] B1.22 |
+
+- [TZS] B1.21 [3p]: when a defender's announcement fails, or a defender's silent pagat fails, "se soigralcu priznajo enake vrednosti, kot igralcu z igro". The other defender is credited the same amount as the declarer.
+- **Defenders announce too.** They may announce trula, kings, pagat ultimo and valat [P][WIKI]. Kontra on those comes from the declarer side, subject to the [4p] certainty rule. King ultimo can be announced only by the called-king holder (§8.8), who is always on the declarer side.
 
 ---
 
@@ -268,7 +346,8 @@ After the exchange, starting with the declarer and going round until everyone ha
 1. You **must follow the suit led** if you can. If taroks are led, you must play a tarok.
 2. If you **can't follow suit, you must play a tarok**.
 3. With neither the suit nor any tarok, you may play anything.
-4. In **positive contracts you need not beat the cards on the table**. "Barvanje je obvezno, prevzem ni."
+4. In **positive contracts you need not beat the cards on the table**. "Barvanje je obvezno, prevzem ni." This holds **for taroks as well as suits** [TN][B]: a void player must trump but may undertrump.
+5. In positive contracts the pagat may be led or played freely, including voluntarily into a trick with škis and mond, which it then wins. Exceptions: an announced pagat ultimo (§8.8), and the variants in 8.3.4.
 
 ### 8.3 Extra rules in negative contracts (klop, beggar, open beggar)
 
@@ -278,12 +357,40 @@ After the exchange, starting with the declarer and going round until everyone ha
    - it is your only legal card (e.g. your only tarok when you must play a tarok), or
    - the škis and mond are already in the trick, so the pagat wins it (emperor trick, §8.4) and is therefore the "card that beats". [TZS] makes this compulsory: if the other two have played škis and mond in either order, the third player *must* play the pagat if they hold it.
 3. [B]: the pagat is likewise "forced" in all contracts worth more than 70.
+4. **Precise legal-move algorithm** (negative contracts). It reproduces [P], [OS], [TN]/[B] ("pagat must fall last of the taroks") and [TZS] B2.7 in every case:
+   1. `F` = the cards legal under follow-suit (8.2.1–3).
+   2. **Must-beat, the "would take the lead" rule.** "The highest card on the table" means *the card currently winning the trick*, using the full winner rule including the emperor trick. If any card in `F` would win the trick if played now, `L` = those cards. Otherwise `L = F`.
+   3. **Pagat filter.** If `|L| > 1`, remove the pagat from `L`.
+   4. Play any card in `L`.
+
+   Consequences, for tests:
+
+   | situation | legal |
+   |---|---|
+   | suit led, no tarok in the trick yet, you hold the suit | led-suit cards above the highest led-suit card if you have any, else any led-suit card |
+   | suit led, **a tarok already in the trick**, you hold the suit | **any** led-suit card: you can't win, so there is nothing to beat [OS], matching [P] literally |
+   | void in the led suit, no tarok in the trick yet | any tarok (each one wins) |
+   | void in the led suit, a tarok in the trick | a higher tarok if you have one, else **any** tarok (undertrumping is allowed, but a tarok must still be played [TN][B]) |
+   | tarok led | a tarok higher than the highest in the trick if you have one, else any tarok |
+   | škis and mond in the trick, you may play a tarok, and you hold the pagat | the pagat only (it is the only winning card) |
+   | void in the led suit and no taroks | anything; nothing to beat |
+   | leading | anything except the pagat, unless it is your last card ([TN]: "igrati ga sploh ne smemo") |
+
+   - **Gotcha in [OS] and [PAL]:** both apply the emperor force *before* the follow-suit check. Example: ♥ led, A trumps with the škis, B trumps with the mond, and C holds ♥ and the pagat. [OS] then returns `{pagat}`, which is a revoke, and [PAL] deadlocks. **The emperor force applies only when the pagat is already legal under follow-suit.**
+   - With the pagat and II, unable to overtrump: you must play the II.
+   - [PAL] differs when following suit after a tarok: it still requires a card above the highest led-suit card. No written source supports that (§13 flag).
+   - The [TZS] B2.7 "tretji igralec" means, in general, any player still to play after the škis and mond are both in the trick.
+5. **Who is bound.** In beggar and open beggar, must-beat and the pagat rule bind **every player**, defenders included [P][ST][MZT][OS][PAL]. No written source limits them to the declarer.
+6. **Contrary rule [ZIR]:** in klop the pagat must not take an emperor trick unless it is the player's last tarok.
 
 ### 8.4 Who wins a trick
 
 - If the trick contains a tarok, the highest tarok wins; otherwise the highest card of the suit led.
 - **Emperor trick (*cesarski štih*):** if **škis, mond and pagat** all fall in the same trick (in any order), **the pagat wins it**.
   - Exception: in colour valat, if a non-tarok was led and the other three cards are exactly the trula, the led card wins.
+    **[baseline, OS][PAL]** General form: in colour valat the emperor rule applies only when a tarok is led. On a suit lead, the highest card of the led suit wins as usual. A suit lead plus the trula needs 4 cards, so this case exists only in [4p].
+  - The emperor rule applies in **every** contract [P][TZS B1.13][OS][PAL], klop and beggar included. That is why the pagat gets forced in §8.3.
+  - **The škis is not the French Excuse.** It must follow a tarok lead, may be led at any time, and wins every trick except an emperor trick, the last trick included. No Slovenian source gives it any excuse-like behaviour.
 
 ### 8.5 Captured mond (mondfang)
 
@@ -292,9 +399,10 @@ Applies in **normal contracts and solo without** only, not in klop, beggar or th
 - If the škis and the mond fall in the same trick, **the player who played the mond is penalised −20**. This holds even if their own partner won the trick.
 - The penalty is **personal**: partners are not affected. It is **never doubled** by kontra or radelc.
 - The same penalty applies for leaving the mond in the talon (§7.3).
-- **[baseline, P]** It also applies inside an emperor trick. [TZS] says it does *not*.
+- **[baseline, P][OS][PAL][ZIR]** It also applies inside an emperor trick. [TZS] B1.13 ("Taka izguba monda ne šteje kot kazenski vzetek") and [MZT] ("Ta scenarij ne velja za »mondfang«") say it does *not*. [TZS] B1.26 defines the mondfang as the škis, "kot najmočnejša karta", taking the mond.
 - [TZS] and [TN] use −21 (they don't round, §9).
-- [TN]: if you capture your own partner's mond, both of you pay −20.
+- [TN]: if you capture your own partner's mond, both of you pay −20. [ZIR]: only an **opponent's** capture counts.
+- Contract scope: [OS] includes solo without; [PAL] excludes it. Every source excludes klop, beggar and the valats ([TZS] is ambiguous, §15).
 
 ### 8.6 Colour valat
 
@@ -315,12 +423,37 @@ Applies in **normal contracts and solo without** only, not in klop, beggar or th
 - **Pagat ultimo:** the pagat must **win** the last trick. Partner winning it doesn't count.
 - **King ultimo:** the called king must be **in** the last trick and the declarer's **side** must win that trick.
 - **Implied attempt:** if the pagat or the called king is played to the last trick **without** an announcement, it counts as a silent attempt. If it fails, the side loses the silent value (−25 or −10).
+  - *Every* play of the pagat to the last trick counts [P "you are deemed to be attempting"][WIKI][TN][PAL]. It is necessarily the player's last card, so "forced" vs "voluntary" can't be told apart there.
+  - Pagat played **before** the last trick, unannounced: nothing is scored, whether it was forced or voluntary.
 - An **announced** ultimo fails if:
   - the card is played to the last trick and loses;
-  - the card is forced out earlier;
+  - the card is forced out earlier ([TN][B]: "če ga je igralec prisiljen izigrati (vreči) pred zadnjim vzetkom");
   - the side doesn't hold the card at all.
 - The announcing side **must keep the card until the last trick** if the rules of play allow it.
-- An announcement of **valat cancels** all other announcements, including the obligation to hold the ultimo card [P][B].
+  - **Engine:** while a pagat-ultimo announcement stands, the pagat is legal before the last trick only if it is the holder's only legal card. It may never be led unless it is the only card [TN "se ne sme izigrati (vreči ven)", "kot zadnji tarok"]. Treat an announced king ultimo the same way. Silent ultimos put no restriction on play.
+- An announcement of **valat cancels** all other announcements, including the obligation to hold the ultimo card [P][B rule 11]. This holds even if the valat then fails.
+- **Either side** can hold and score pagat ultimo. A defender's beaten pagat in the last trick is **+25 for the declarer side**; a defender's winning pagat is −25 [P scoring][TZS B1.21][PAL].
+- **Pagat ultimo via an emperor trick** in the last trick counts as a success [TN][B 3p section][P][OS]. [TZS] B1.18 requires the last trick to be won "s pagatom, kot edinim tarokom", which read literally excludes it (§13, §15). Any mondfang in that trick is scored separately (§8.5).
+- **Pagat and the called king in the same last trick:** score them **independently**. Examples:
+  - a declarer-side pagat wins a trick that contains the called king: + pagat ultimo, + king ultimo;
+  - a defender's pagat wins it: − pagat ultimo, − king ultimo (the silent king attempt failed);
+  - a declarer-side pagat is beaten by a declarer-side tarok, with the king in the trick: − pagat ultimo, + king ultimo.
+
+  [OS] wrongly treats the two as mutually exclusive, and it doesn't check that the pagat actually *won*.
+- **[4p] King ultimo when the declarer holds the called king** (own king called, or a zarufan king taken from the talon): **[baseline]** the holder is "the called player" [P], so it scores 10/20 as normal. [TN] "kralj ultimo (vleče sam)" gives 25/50 (§15). If the zarufan king was not taken, king ultimo is impossible (§7.1).
+- **[4p] Announcing king ultimo reveals the partner.** [WIKI] calls it "edini legalen način, da se partner razkrije" (the only legal way for the partner to reveal themselves).
+
+### 8.9 Valat details
+
+- **Definition:** one side wins **every trick**. Talon groups, discards and the zarufan remainder are not tricks. Test "won every trick", never the pile size.
+- **Silent valat** (declarer side): +250, which **replaces** the game, the difference and every bonus [P][TZS][B][WIKI]. The mond penalty is personal, so it still stands.
+- **Kontra on a silent valat:** it is multiplied by the kontras already said on the game, and by radelc. [TZS] B1.14: "obračuna se osnovna vrednost 250 točk, povečana za izrečene posebne napovedi in radelc" (remember that *posebne napovedi* means kontras in [TZS]); [PAL] agrees.
+- **Announced valat:** +500 if made. **[baseline, PAL]** −500 if it fails, replacing the game and all bonuses (no rulebook confirms this, §15). It can be kontra'd as its own item [P]. [PAL] instead applies the game's kontra to it.
+- **Defenders take every trick:** a valat for the defenders, −250 to the declarer side, replacing everything [WIKI "ena stran"][OS][PAL]. Defenders may also announce valat [WIKI "napove ga lahko kdorkoli"]: −500 to the declarer side if they make it, +500 if they fail.
+- **Radelc:** doubles a valat like any hand score. Everyone gets a new radelc after any hand with a valat, won or lost, by either side [P][PAL].
+- **High contracts:** colour valat and valat without are contracts with flat values. Taking every trick in beggar, solo without and the other high contracts is just the contract result: there is no valat bonus (§15 for solo without).
+- **Klop:** one player taking every trick has > 35 points, so it scores −70 [P][TZS]. [B] rule 3b: +70.
+- [TN] is very different: a silent valat is a **50-point bonus** added to the game like trula, and an announced valat has contract-dependent values (§13).
 
 ---
 
@@ -345,7 +478,18 @@ mond     = −20 to whoever lost the mond (separate, never multiplied)
 ```
 
 - The **game and each bonus are independent**. You can win the game and still lose points overall on bonuses.
-- **Valat** (silent 250 / announced 500) replaces the game and all bonuses.
+- **Order of operations** [P worked examples][PAL]:
+  1. round the difference;
+  2. multiply the game by its kontra;
+  3. multiply each bonus by its own kontra;
+  4. sum the game and the bonuses;
+  5. double for radelc;
+  6. add the mond penalty outside all of this.
+
+  No source rounds after multiplying. Examples: [P] (40 + 15 + 20) × 2 = 150; (30 + 10 + 20 + 10) × 2 = 140, with the mond −20 separate.
+- **A loss by 0** still flips the sign: −(value + 0) × m. With exact counting, 35 points is a loss with diff 0.
+- **Defenders' bonuses go on the declarer side's line**, so the **declarer's** radelc doubles them. [B] rule 10: "Vedno se vse … piše igralcu, ki je licitiral igro (z radlcem, če ga ima) in njegovemu soigralcu (brez radlca)".
+- **Valat** (silent 250 / announced 500) replaces the game and all bonuses. Details in §8.9.
 - [3p]: only the declarer writes the game score. Defenders write their own bonus results, and [TN] gives the non-announcing defender half.
 - **[4p] [baseline, P] Partner solidarity:** the declarer and partner each write the same amount; the defenders write nothing.
   Variants: [TN] says the partner writes half. In "money" scoring, each player pays or receives individually (§13).
@@ -357,10 +501,19 @@ mond     = −20 to whoever lost the mond (separate, never multiplied)
   - klop was played,
   - beggar or a higher contract was played, or
   - any valat was won or lost.
-  It is added **after** that hand is scored.
+  It is added **after** that hand is scored, so the triggering hand never uses its own new radelc.
+  - A **lost** beggar triggers radelci too: the trigger is the contract being *played* [P][TZS "po odigranem beraču"][PAL]. Colour valat triggers them [P][TN][PAL].
+  - Trigger sets differ: [TZS] B1.25 lists klop, beggar and valat (not solo without). [TN] lists klop and the high contracts. [MZT] gives radelci after any game worth **≥ 60** (so solo one too), plus klop and valat. [ST] gives them after klop only.
+  - [5p] The sitting-out dealer gets one too [P].
 - When a declarer with a radelc plays, their hand score is **doubled**. If they **win**, one radelc is cancelled; if they lose, it isn't (and the loss is doubled).
-- [P] doubles the partner too. [B] does not double the partner.
-- At the end of the session, every uncancelled radelc costs **−100**.
+  - **Only the declarer's radelc counts.** Defenders' radelci are never used or cancelled while they defend [P][B][TN][PAL]. The partner's own radelc is never used or cancelled either.
+  - **Radelci never stack:** the score is ×2 however many the declarer holds, and one is cancelled [P][PAL].
+  - **"Win" means the contract was made**, not that the hand total is positive. A made game that nets negative after lost bonuses still cancels a radelc [PAL].
+- [P] and [TN] ("tudi soigralcu") double the partner too. [B] does not double the partner.
+- At the end of the session, every uncancelled radelc costs **−100** [P]. [PAL]: −40.
+- **[TZS] radelci work differently** (B1.24–25). A radelc doubles "odigrane igre, napovedi in posebnih napovedi" (game, bonuses and kontras). It is erased "po prvi odigrani igri po pridobitvi le-tega" (after the first hand played after it was gained), **win or lose**. So radelci never accumulate, and there is no end-of-session penalty.
+- [ST] "Štajerci" use **collective radelci**: each trigger adds one per player to a shared pool. The next **won** hand, whoever plays it, is doubled and erases one; a lost hand is doubled and erases none.
+- **Renons:** [baseline, P] the culprit's own radelc doubles the penalty and is not cancelled. [TZS] C2.3: the declarer's radelc counts, and it is erased if the declarer was the culprit. [TN] §3.4: the radelc counts only if the culprit is the declarer.
 
 ---
 
@@ -371,14 +524,44 @@ Played when everyone passes and forehand chooses it, or when compulsory (§6.8).
 - Every player for themselves. There are no bonuses and no announcements, except the kontra variant below.
 - The negative-contract rules apply (§8.3): **must beat if possible**, and the **pagat only when forced**.
 - **Talon "vitamins":** during the first 6 tricks, the top talon card (in dealt order) is turned up and added to each trick, going to its winner.
+  - Vitamin points count in the winner's pile and are batched like any other card (§3) [TZS B2.6 "točkovna vrednost dodanih kart se prišteje"][P][OS].
+  - A vitamin is never a trick of its own. It attaches to a trick of played cards, so it can't change "took no tricks". Test `tricks_won == 0`, not `points == 0` (the two agree, but the first is clearer).
+  - [ZIR] 3p variant: no vitamins; each player takes 2 talon cards into hand before play.
+- The pagat and must-beat rules are given precisely in §8.3.4. Forehand leads [TZS B2.1].
 - **Scoring [P]:**
   - Anyone taking **more than 35** points loses and writes **−70**.
   - Anyone taking **no tricks** wins and writes **+70**.
   - If anybody won or lost this way, *only* those players score.
   - Otherwise each player writes −(their points, rounded to 5).
   - Players with an uncancelled radelc double their result; a radelc-holder who wins writes +140 and cancels a radelc.
+- **Exact algorithm [P][OS][PAL][TN]:**
+  ```
+  full  = {p : points(p) > 35}          # at most one player, since the total is 70
+  empty = {p : tricks_won(p) == 0}      # may contain several players
+  if full or empty:
+      score(p) = -70 if p in full else +70 if p in empty else 0
+  else:
+      score(p) = -round5(points(p))     # remainder 1–2 rounds down, 3–4 up
+  if radelc_in_klop: double each radelc holder's score; an empty holder cancels one
+  ```
+  - One full player and one empty player: −70 and +70, everyone else 0 ([TN] says so explicitly).
+  - With a "≥ 35" threshold ([TZS][TN]), two players on exactly 35 can both be full.
+  - Empty players: two in [4p]; two in [3p] only if one player takes every trick.
 - After a klop everyone gets a radelc.
-- Klop scoring varies more than any other part of the game: [TZS] has no doubling for radelc in klop; [B] gives +70 for taking every trick and 0 for taking none. See §13.
+- Klop scoring varies more than any other part of the game:
+  - [TZS] B2.3: ≥ 35 → −70, everyone else −points, no bonus for taking nothing, and no radelc doubling (B2.5).
+  - [TN]: ≥ 35, no radelc ("Točke klopa ne gredo pod radelc").
+  - [B]: > 35 → −70, taking no trick = 0, taking every trick = +70.
+  - [MZT]: ±35.
+  - [ST]: −35 / +10.
+
+  See §13 for the flags.
+- **Kontra in klop** (`klop_kontra`, off in the baseline):
+  - **[B][PAL]**: anyone may say a single kontra, except the resting "talon" player. Never in compulsory klop. If the kontra-er has the highest total, only they write double; otherwise **everyone** writes double.
+  - [TZS] B2.2–4: one kontra, by one player only, offered in seat order. Points are normally doubled for everyone. If the kontra-er has the most points and ≤ 34, only the kontra-er's result is doubled.
+  - [TN] §3.8: kontra ×2 and rekontra ×4 for everyone. The kontra-er must take ≤ 17 points, otherwise their points are doubled again.
+  - [P] variant: anyone > 35 loses 140; if nobody exceeds 35, the kontra-er loses 140.
+  - [ZIR]: a player who hasn't decided by their first card is deemed to have said kontra.
 
 ---
 
@@ -443,8 +626,12 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 - `annul_weak_hand` (3p) = off · on (≤ 2 taroks, all < X)
 
 **Bidding**
-- `forehand_compulsory_three` = off [P] · on [TZS][B]
-- `may_raise_after_auction` = on [P] · off [B]
+- `forehand_compulsory_three` = off [P] · on [TZS][B][MZT][ST]
+- `forehand_speaks` = last [P 4p][PAL] · first [TZS][TN][B][MZT][P 3p]
+- `hold_rights` = any senior [P][OS][TN §3.2] · forehand only [MZT][ST][PAL][B][TN §2.3] · none [SEL]
+- `may_raise_after_auction` = on [P] · off [B][OS] · forehand only, when unbeaten [TZS]
+- `valat_bid_only_over_berac` = off · on [TZS B1.17][MZT (over open beggar)]
+- `three_bidder_loses_klop` = off · on [TN §3.2] (only when compulsory three is off)
 - `contracts_enabled` = all of §5 · add `piccolo` (exactly 1 trick, 70) · add `open_solo_without` (100 [B]) · drop open beggar / colour valat / valat (3p)
 
 **Compulsory klop**
@@ -452,6 +639,8 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 
 **King call**
 - `called_king_in_talon` = win the rest of the talon with the king [P] · must take that group [B] · +5 points if the king never wins a trick [TN]
+  - split into: `called_king_take_group` = optional [P][TN][OS] · compulsory in "two" only [B] · always compulsory [ST]
+  - `called_king_lost_compensation` = none [P][B] · +5 card points to the declarer [TN]
 - `four_kings_call` = must call own king · may call a trula card · "fourth king" without suit
 
 **Discards**
@@ -461,26 +650,65 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 - `win_threshold` = 36 · "35 + one card" (> 35)
 - `diff_rounding` = 5 [P][B] · 1 [TZS][TN]
 - `mond_penalty` = 20 · 21 (exact scoring)
-- `mond_penalty_in_emperor_trick` = yes [P] · no [TZS]
+- `mond_penalty_in_emperor_trick` = yes [P][OS][PAL][ZIR] · no [TZS][MZT]
 - `mond_in_talon_with_called_king` = see §7.3 · [B]: always penalised if the mond is left, unless the king is also left
+- `mondfang_by_partner` = the mond's player pays [P][PAL] · no penalty [ZIR] · both partners pay [TN]
+- `mondfang_contracts` = normal + solo without [P][OS] · normal only [PAL]
+- `announced_mondfang` = off · on (−42, can be kontra'd) [PAL]
+
+**Play (negative contracts)**
+- `negative_follow_suit_after_trump` = free, any led-suit card [P][OS] · must still exceed the highest led-suit card [PAL]
+- `pagat_restriction_contracts` = {klop, beggar, open beggar} [P][OS] · plus colour valat and valat [B rule 9]
+- `emperor_force_in_positive_contracts` = off · on [PAL]
+- `klop_emperor_pagat` = forced [P][TZS][B][MZT][ZN][OS] · forbidden unless it is the last tarok [ZIR]
 
 **Kontra**
-- `kontra_levels` = 4 (kontra, re, sub, mort) · 2 [TN] · 5 (+ hirškontra)
-- `kontra_on_silent` = no [TZS][TN] · yes [B]
-- `rekontra_by` = either declarer-side player · declarer only [B]
+- `kontra_levels` = 4 (kontra, re, sub, mort) · 3 (no mort) [SEL] · 2 [TN] · 5 (+ hirškontra)
+- `kontra_on_silent` (as `silent_bonus_multiplier`) = 1, silent bonuses unaffected [TN] · the game's kontra multiplier [B]. [TZS] is silent (§7.5).
+- `rekontra_by` = either declarer-side player [P] · declarer only [B][MZT][ST]
+- `same_player_kontra_and_sub` = allowed · forbidden [ZIR]
+- `kontra_on_trula_kings` = yes · no [PAL]
+- `valat_kontra` = a separate item [P] · uses the game's kontra [PAL]
+- `kontra_settlement` = symmetric [P][B] · caller pays [TN] · compensation for the other defender [TZS B1.21–22]
+- `kontra_three_restriction` = off · on [SEL]
+- `grouped_kontra` = off · on [SEL]
 
 **Partner and radelc**
 - `partner_share` = equal [P][B] · half [TN]
-- `radelc_doubles_partner` = yes [P] · no [B]
-- `radelc_end_penalty` = 100
+- `radelc_doubles_partner` = yes [P][TN] · no [B]
+- `radelc_triggers` = {klop, beggar or higher, any valat} [P][PAL] · {klop, beggar, valat} [TZS] · {klop, high contracts} [TN] · {klop, any game worth ≥ 60, valat} [MZT] · {klop} [ST]
+- `radelc_lifetime` = until the holder wins a declared hand [P] · the next hand only, win or lose [TZS]
+- `radelc_on_renons` = the culprit's [P] · the declarer's [TZS] · only if the culprit is the declarer [TN]
+- `radelc_pool` = per player · collective [ST]
+- `radelc_end_penalty` = 100 [P] · 40 [PAL] · 0 [TZS]
 
 **Ultimo bonuses**
 - `silent_pagat_ultimo_scope` = whole side · holder only (on loss, or always)
 - `valat_cancels_ultimo_obligation` = yes
+- `pagat_ultimo_via_emperor` = yes [P][TN][B][OS] · no [TZS literal]
+- `pagat_ultimo_win_condition` = the pagat wins the last trick · the pagat's side wins the last trick [ZIR]
+- `silent_ultimo_attempt` = any play to the last trick [P][WIKI][TN][PAL] · scores only when won (not attested; a guard)
+- `king_ultimo_own_king` = 10/20 as normal [P] · 25/50 "vleče sam" [TN]
+
+**Valat**
+- `silent_valat_value` = 250, replaces everything [P][TZS][B][WIKI] · a 50-point bonus added to the game [TN]
+- `announced_valat_value` = 500 flat [P][TZS][B] · contract-dependent [TN] (3p: 250/300/350/500; 4p: 200/220/240 with the partner on half, solo 250/300/350/500)
+- `silent_valat_kontra` = inherits the game's kontra [TZS B1.14][PAL] · none
+- `defender_valat` = scored as a valat against the declarer side [WIKI][OS][PAL] · plain game scoring (not attested; a guard)
+- `failed_announced_valat` = −500 replaces the game [PAL] · −500 added to the game score
 
 **Klop**
 - `klop_scoring` = [P] (±70 / −points) · [TZS] (≥ 35 → −70) · [B] (+70 for taking every trick)
-- `klop_kontra` = off · on (×2; contra-caller limits apply)
+  - split into: `klop_full_threshold` = > 35 [P][B][OS][PAL][MZT] · ≥ 35 [TZS][TN]
+  - `klop_full_score` = −70 · −35 [MZT][ST]
+  - `klop_empty_score` = +70 [P][TN][OS][PAL] · 0 [B] · none [TZS] · +35 [MZT] · +10 [ST]
+  - `klop_empty_requires_nobody_full` = no [P][TN] · yes [MZT]
+  - `klop_others_score_when_decided` = 0 [P][TN][B][OS][PAL] · −points [TZS]
+  - `klop_valat_bonus` = off · +70 [B]
+  - `klop_rounding` = 5 [P][B] · exact [TZS][TN][OS][PAL]
+  - `radelc_in_klop` = per player, cancel on +70 [P][B] · ignored [TZS][TN][PAL]
+- `klop_talon` = vitamins in tricks 1–6 · 2 cards each before play, 3p [ZIR]
+- `klop_kontra` = off · [B]/[PAL] semantics · [TZS] · [TN] · [P] (§10). Never in compulsory klop [B].
 - `klop_mond_lead_restriction` = off · on (no mond lead while the škis is out)
 
 **Beggar**
@@ -507,3 +735,32 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 - **Check every count with the sides-sum-to-70 invariant** (§3).
 - **The session state machine** (`game.Session`) must check the round counter *before* the unconditional `round_finished` transition. Currently a session never reaches `finished`.
 - **Card data:** `SpecialCard.rank_weigh` is a typo for `rank_weight`, and ordering across card types depends on it.
+- **Learn from the open-source engines' bugs.** [OS] and [PAL] both apply the emperor force before follow-suit (§8.3.4). [OS] scores pagat ultimo without checking that the pagat won, and treats it and king ultimo as mutually exclusive (§8.8). Write tests for exactly these cases.
+- **Per-player ledger.** Under the [TN] and [TZS] kontra settlements and [TZS] B1.21, players on the same side write different amounts. Don't store only a "declarer side score".
+- **Early termination** ([OS]): the result is fixed once a beggar declarer wins a trick, or a (colour) valat declarer loses one. Make stopping an option. Claims (§11) and some bonus rules still need the remaining tricks.
+- **Move legality must never depend on the engine's knowledge of the hidden sides** in [4p]. Must-beat, the pagat rules and the emperor trick are per-player rules.
+
+---
+
+## 15. Open questions
+
+Points no source settles. The engine should make these configurable rather than guess.
+
+- **Holding in [TZS].** B1.9 allows only raising ("zviša"). May forehand hold equal to a junior bid, including a beggar? The [TZS] mode probably means `hold_rights = none`.
+- **[TZS] "kot edinim tarokom"** (B1.18): does it really exclude a pagat ultimo won through an emperor trick in the last trick? No commentary found.
+- **[TZS] B1.22** gives only the principle of the compensation bonus. The exact formula at rekontra and above is not given.
+- **[TZS] B1.25:** does a klop count as "the first hand played" after a radelc was gained? If so, a klop wastes the radelc, since radelc doesn't apply in klop (B2.5).
+- **[TZS] mondfang in klop:** B1.29 mentions both "mondfangu, klopu". Every other source excludes klop.
+- **Failed announced valat:** is the game scored on top of −500, or does −500 replace it? Only [PAL] (code) decides: it replaces.
+- **Valat in solo without:** 250, or just the contract win + 35? Baseline: just the contract result.
+- **Defender valat in [4p]:** under partner solidarity, the declarer and partner write −250. No rulebook spells this out.
+- **[B] rule 8:** does "no −20 if the called king is left in the talon too" require the king and the mond in the **same** group?
+- **[TN] "kralj ultimo (vleče sam)" 25/50:** does it mean the declarer holds the called king, or whoever leads the last trick?
+- **[4p] Zarufan or own-king declarer:** may they *announce* king ultimo? [P] says "only the called player".
+- **[4p] Hidden partner saying re:** allowed before they reveal themselves? [P] says "either member of the declarer's team", but that reveals them.
+- **Must-beat after a tarok on a suit lead:** [PAL] still requires beating the highest led-suit card. Is there a written source? None found.
+- **Beggar defenders and must-beat:** some social tables reportedly release the defenders. No written source.
+- **[B] colour valat "v eni barvi":** how a named suit changes trick play is not described.
+- **[B] rule 4 "Klopa pišemo v radelcih":** does it mean klop scores are doubled by radelci, or only that klop gives radelci?
+- **[ST] beggar lead** "začenja … tisti, ki sedi levo od licitatorja": the only source where the declarer does not lead. Possibly a typo.
+- **[TN] 3+1 klop:** how the resting "talon" player gets cards is not described.
