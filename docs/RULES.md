@@ -742,25 +742,47 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 
 ---
 
-## 15. Open questions
+## 15. Open questions — default resolutions
 
-Points no source settles. The engine should make these configurable rather than guess.
+No source settles these. Each one is decided below so the engine has a definite behaviour. Every decision is a configurable flag, so a house rule can override it later.
 
-- **Holding in [TZS].** B1.9 allows only raising ("zviša"). May forehand hold equal to a junior bid, including a beggar? The [TZS] mode probably means `hold_rights = none`.
-- **[TZS] "kot edinim tarokom"** (B1.18): does it really exclude a pagat ultimo won through an emperor trick in the last trick? No commentary found.
-- **[TZS] B1.22** gives only the principle of the compensation bonus. The exact formula at rekontra and above is not given.
-- **[TZS] B1.25:** does a klop count as "the first hand played" after a radelc was gained? If so, a klop wastes the radelc, since radelc doesn't apply in klop (B2.5).
-- **[TZS] mondfang in klop:** B1.29 mentions both "mondfangu, klopu". Every other source excludes klop.
-- **Failed announced valat:** is the game scored on top of −500, or does −500 replace it? Only [PAL] (code) decides: it replaces.
-- **Valat in solo without:** 250, or just the contract win + 35? Baseline: just the contract result.
-- **Defender valat in [4p]:** under partner solidarity, the declarer and partner write −250. No rulebook spells this out.
-- **[B] rule 8:** does "no −20 if the called king is left in the talon too" require the king and the mond in the **same** group?
-- **[TN] "kralj ultimo (vleče sam)" 25/50:** does it mean the declarer holds the called king, or whoever leads the last trick?
-- **[4p] Zarufan or own-king declarer:** may they *announce* king ultimo? [P] says "only the called player".
-- **[4p] Hidden partner saying re:** allowed before they reveal themselves? [P] says "either member of the declarer's team", but that reveals them.
-- **Must-beat after a tarok on a suit lead:** [PAL] still requires beating the highest led-suit card. Is there a written source? None found.
-- **Beggar defenders and must-beat:** some social tables reportedly release the defenders. No written source.
-- **[B] colour valat "v eni barvi":** how a named suit changes trick play is not described.
-- **[B] rule 4 "Klopa pišemo v radelcih":** does it mean klop scores are doubled by radelci, or only that klop gives radelci?
-- **[ST] beggar lead** "začenja … tisti, ki sedi levo od licitatorja": the only source where the declarer does not lead. Possibly a typo.
-- **[TN] 3+1 klop:** how the resting "talon" player gets cards is not described.
+How each default was chosen, in order:
+1. Follow the majority of written sources.
+2. Otherwise keep the rule consistent with the rest of this document.
+3. Otherwise copy what an existing engine ([PAL], [OS]) does.
+
+Each item gives the question, the **default**, and the reason.
+
+**Bidding**
+- **Holding in [TZS]** (B1.9 says only "zviša"). **Default:** the `tzs` preset uses `hold_rights = forehand_only`. *Why:* [MZT], [ST] and [PAL] all give forehand the hold, and nothing in [TZS] forbids it explicitly.
+
+**Bonuses and kontra**
+- **[TZS] "kot edinim tarokom"** (B1.18): does a pagat that wins the last trick via the emperor trick count as pagat ultimo? **Default:** yes. *Why:* [P], [B] and [TN] state this exception explicitly. B1.18 reads as describing the normal case, not excluding the emperor case.
+- **[TZS] B1.22 compensation bonus**, exact formula at rekontra and above. **Default:** generalise the stated principle at every level: bonus = (the non-kontra-ing player's result with the kontra chain) − (their result with no kontra). *Why:* this is literally what B1.22 says, and it applies at any level.
+- **[4p] Zarufan or own-king declarer announcing king ultimo.** **Default:** allowed; the declarer is the holder of the called king's side. *Why:* the [P] restriction exists to stop the *declarer* from announcing on behalf of an unknown partner. When the declarer holds or takes the king themselves, that reason disappears.
+- **[4p] Hidden partner saying rekontra before revealing.** **Default:** allowed. Saying it reveals them, and that is the player's choice. *Why:* [P] says "either member of the declarer's team". Nothing forbids self-revealing.
+- **[TN] "kralj ultimo (vleče sam)" 25/50.** **Default:** it means the declarer holds the called king (called their own king, or took it from the talon). *Why:* that reading matches the half-share columns in [TN]'s partner table.
+
+**Valat**
+- **Failed announced valat.** **Default:** −500 *replaces* the game and all bonuses. *Why:* consistent with "valat replaces all other scores" (§7.5), and [PAL] does the same.
+- **Valat in solo without.** **Default:** contract result only (80 + difference rules as configured), no extra valat score. *Why:* high contracts score no bonuses (§5).
+- **Defender valat in [4p].** **Default:** the declarer and partner each write −250 (announced −500), and the defenders write nothing. *Why:* direct consequence of partner solidarity (§9).
+
+**Klop and radelci**
+- **[TZS] does klop "use up" a radelc gained earlier** (B1.25 vs B2.5)? **Default:** no. A radelc is consumed only by a hand the radelc-holder declares and wins. *Why:* [P], [TN] and [B] all tie cancellation to winning a declared game. The other reading would make klops silently delete radelci.
+- **[TZS] mondfang in klop.** **Default:** no penalty in klop. *Why:* every other source excludes klop. B1.29 lists situations where *other players* write scores, not penalty triggers.
+- **[B] rule 4 "Klopa pišemo v radelcih".** **Default:** klop *grants* radelci; klop scores are not doubled by them. *Why:* matches [TZS] B2.5 and [TN].
+- **[TN] 3+1 klop:** how does the resting player get cards? **Default:** not supported. In a 3+1 table, klop is played by the three active players only. *Why:* undocumented; revisit if 3+1 is ever needed.
+
+**Play**
+- **Must-beat after a tarok on a suit lead:** if you can follow suit but a tarok already tops the trick, must you still beat the highest card of the led suit? **Default:** yes, as [PAL] does. *Why:* it keeps the rule meaningful (you can't dump a high card under a tarok), and it is the only implemented precedent.
+- **Beggar defenders and must-beat.** **Default:** the defenders are bound too. *Why:* every written source states must-beat for negative contracts as a whole. Releasing them is unsourced table lore.
+- **[ST] beggar lead by the player left of the declarer.** **Default:** the declarer leads. *Why:* every other source agrees; [ST] is likely a typo.
+
+**Talon**
+- **[B] rule 8:** must the king and the mond be in the *same* group for "no −20 when the called king is also left in the talon"? **Default:** no; it's enough that both are anywhere in the untaken talon (only relevant in the `b` preset). *Why:* the literal text names no group condition.
+
+**Contracts**
+- **[B] colour valat "v eni barvi":** what does naming a suit change? **Default:** naming a suit is ignored; colour valat plays as in §8.6. *Why:* no source describes any rule change from the named suit.
+
+> If someone who plays regularly disagrees with any default above, change the flag. These defaults are not claims about how the game "really" goes.
