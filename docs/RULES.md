@@ -64,6 +64,14 @@ Where sources disagree, the choice made for the baseline is stated inline as **[
 | obvezni klop | compulsory klop | |
 | platelc / platerc | — | a 1-point card (any card worth 1 point) |
 | forehand (obvezna trojka) | — | the first player dealt to, who has the highest bidding priority |
+| musanje | follow suit | the duty to play the led suit if you have it, a tarok on a tarok lead, and a tarok if void. Applies in every contract; separate from must-beat |
+| — | must-beat | the extra duty in negative contracts to play a card that would take the lead now, if you have one (§8.3.4) |
+| igra | contract | what is bid and played: tri, dve, ena, solo, berač, odprti berač, barvni valat, valat, klop. *Avoid* "game" for this |
+| deljenje | deal | one deal played to the end under one contract: bidding, talon, tricks, scoring. *Avoid* "hand", "game", "round" for this |
+| roka | hand | the cards a player holds |
+| runda | round | one full cycle in which every player deals once |
+| partija | session | a series of deals with running scores and radelci. *Avoid* "game", "match" |
+| — | table | the player-count form, 3-player or 4-player: deal shape, bidding ladder, king call. *Avoid* "mode"; "variant" means a §13 rule switch |
 
 ---
 
@@ -580,7 +588,9 @@ The culprit **alone** is charged the full value of the game: contract **+ 35 dif
 
 A claim works like this: a player may lay down their hand and claim the remaining tricks. If any claimed trick turns out to be wrong, all remaining tricks go to the opponents [TZS].
 
-**Session end, the škis round:** when the players want to stop, they play a hand and note who was **dealt** the škis. That player's next deal is the last hand of the session. If the škis was in the talon, repeat the škis round. After the last hand, subtract the leftover radelci (−100 each) and rank by total.
+**Session end [baseline]:** the players agree on a number of rounds up front (a round = every player deals once); after the last deal, subtract leftover radelci (−100 each) and rank by total.
+
+**Session end, variant — the škis round:** when the players want to stop, they play a hand and note who was **dealt** the škis. That player's next deal is the last hand of the session. If the škis was in the talon, repeat the škis round. After the last hand, subtract the leftover radelci (−100 each) and rank by total.
 Tournaments instead use fixed counts of hands: 12, 21, 24 …
 
 ---
@@ -722,7 +732,7 @@ Each variant is listed as `flag` = baseline, then the alternatives.
 - `vogel_frei` (3p) = off · on
 
 **Session**
-- `session_end` = škis round · fixed number of hands
+- `session_end` = **[baseline] fixed number of rounds** · škis round
 
 ---
 
@@ -775,7 +785,7 @@ Each item gives the question, the **default**, and the reason.
 - **[TN] 3+1 klop:** how does the resting player get cards? **Default:** not supported. In a 3+1 table, klop is played by the three active players only. *Why:* undocumented; revisit if 3+1 is ever needed.
 
 **Play**
-- **Must-beat after a tarok on a suit lead:** if you can follow suit but a tarok already tops the trick, must you still beat the highest card of the led suit? **Default:** yes, as [PAL] does. *Why:* it keeps the rule meaningful (you can't dump a high card under a tarok), and it is the only implemented precedent.
+- **Must-beat after a tarok on a suit lead:** if you can follow suit but a tarok already tops the trick, must you still beat the highest card of the led suit? **Decided (maintainer):** no. Musanje only requires the led suit; any card of it is legal because nothing can take the lead from the tarok (§8.3.4 table, §13 `negative_follow_suit_after_trump = free`). [PAL]'s behaviour stays available only as that flag's non-default value.
 - **Beggar defenders and must-beat.** **Default:** the defenders are bound too. *Why:* every written source states must-beat for negative contracts as a whole. Releasing them is unsourced table lore.
 - **[ST] beggar lead by the player left of the declarer.** **Default:** the declarer leads. *Why:* every other source agrees; [ST] is likely a typo.
 
