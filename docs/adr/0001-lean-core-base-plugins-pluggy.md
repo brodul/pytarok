@@ -9,7 +9,10 @@ We rejected a game-agnostic core (the variety we need is between contracts and t
 ## Consequences
 
 - When a session starts, the set of active plugins (names and versions) is recorded with it, so a session can be replayed against the same plugins.
-- Contracts cannot change mid-deal: the colour valat upgrade after the talon exchange (RULES §7.4) is not supported.
+- A contract cannot change once play has started. The colour valat upgrade (RULES §7.4) is supported because it happens after the talon exchange and before the first card: it is a recorded action that swaps the deal's contract, and with it the trick rules.
+- The core stays lean: cards and point counting, the deal loop and phases, immutable state and the action log, the registry and interfaces, and the session loop. Everything else (trick rules, bidding ladders, talon handling, scoring and bonuses) is in base plugins, which live in this repo as `pytarok.base` and register through pytarok's own entry points.
+- At session start, a manifest of every active plugin (name, version, config) is recorded. A replay against a different set of plugins fails with a clear error.
+- Rules are tested with pytest-bdd: Gherkin features in English using the §1 terms, stored next to the plugin they test.
 - The first slice is core + 3-player table + the tri contract. While tri is the only contract, an all-pass deal is thrown in and compulsory klop does not trigger; both go away when the klop contract lands.
 - Every contract plugin must pass the shared conformance suite at every table it supports.
 
