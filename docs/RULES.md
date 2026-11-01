@@ -64,6 +64,12 @@ Where sources disagree, the choice made for the baseline is stated inline as **[
 | obvezni klop | compulsory klop | |
 | platelc / platerc | — | a 1-point card (any card worth 1 point) |
 | forehand (obvezna trojka) | — | the first player dealt to, who has the highest bidding priority |
+| musanje | follow suit | the duty to play the led suit if you have it, a tarok on a tarok lead, and a tarok if void. Applies in every contract; separate from must-beat |
+| — | must-beat | the extra duty in negative contracts to play a card that would take the lead now, if you have one (§8.3.4) |
+| igra | contract | what is bid and played: tri, dve, ena, solo, berač, odprti berač, barvni valat, valat, klop. *Avoid* "game" for this |
+| igra, runda | hand | one deal played to the end under one contract. *Avoid* "round", "game" |
+| partija | session | a series of hands with running scores and radelci. *Avoid* "game", "match" |
+| — | table | the player-count form, 3-player or 4-player: deal shape, bidding ladder, king call. *Avoid* "mode"; "variant" means a §13 rule switch |
 
 ---
 
